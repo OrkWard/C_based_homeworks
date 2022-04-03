@@ -57,7 +57,7 @@
 ## 表(List)ADT
 
 - 空表：大小（表中所含元素）为0的表
-- 常用的操作：PrintList, MakeEmpty, Find, Insert, Delete, FIndKth
+- 常用的操作：PrintList, MakeEmpty, Find, Insert, Delete, FindKth
 
 ### 链表(Linked List)
 
@@ -220,7 +220,7 @@
 
 - 具有相同parent的节点称为**sibling**
 
-- 从节点$n_1$到$n_k$的**路径(path)**定义为节点$n_1, n_2, ... , n_k$的一个序列，使得对于1≤$i$<$k$，节点$n_i$是$n_i+1$的parent。路径的**长(length)**为路径上的边的条数，即$k-1$，节点到节点本身的路径长度为0，在一棵树中从根到每个节点恰好存在一条路径
+- 从节点$n_1$到$n_k$的**路径(path)**定义为节 $n_1, n_2, ... , n_k$的一个序列，使得对于1≤$i$<$k$，节点$n_i$是$n_i+1$的parent。路径的**长(length)**为路径上的边的条数，即$k-1$，节点到节点本身的路径长度为0，在一棵树中从根到每个节点恰好存在一条路径
 
 - 对任意节点，其==**深度(depth)**为根到这个节点的唯一路径的长==，根的深度为0
 
