@@ -1,6 +1,0 @@
-{
-    "C_Cpp.errorSquiggles": "Enabled",
-    "lldb.displayFormat": "auto",
-    "lldb.showDisassembly": "always",
-    "lldb.dereferencePointers": true
-}
