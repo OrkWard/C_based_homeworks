@@ -69,7 +69,7 @@ int main() {
 	double** groundCor; // 地面坐标
 
 	FILE* fp; // 文件句柄
-	fp = fopen("input.txt", "r");
+	fp = fopen("data1.txt", "r");
 	fscanf(fp, "%d%lf%lf%lf", &m, &x_0, &y_0, &f);
 	int N, i; // 控制点数，计数器
 	fscanf(fp, "%d", &N);
