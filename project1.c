@@ -62,15 +62,49 @@ double** calcuRotateMat(double phi, double omega, double kappa) {
 	return resultMat;
 }
 
+// 作二阶矩阵的逆变换
+void inverseMat2nd(double** mat) {
+	double tmp = mat[0][0];
+	mat[0][0] = mat[1][1];
+	mat[1][1] = tmp;
+	mat[1][0] = -mat[1][0];
+	mat[0][1] = -mat[0][1];
+}
+
+// 作矩阵的转置
+double** transpMat(double** mat, int row, int col) {
+	int i, j;
+	double** result = (double**)malloc(col * sizeof(double*));
+	for (i = 0; i < col; i++) result[i] = (double*)malloc(row * sizeof(double));
+	for (i = 0; i < col; i++)
+		for (j = 0; j < row; j++)
+			result[i][j] = mat[j][i];
+	
+	return result;
+}
+
+// 共线方程，第n个控制点
+void colineation(double x_0, double y_0, double f, double* x, double* y, double** R, double** coordinate, int n) {
+	double xCon = 0, yCon = 0, zCon = 0;
+	int i;
+	for (i = 0; i < 3; i++) {
+		xCon += R[i][0] * coordinate[n][i];
+		yCon += R[i][1] * coordinate[n][i];
+		zCon += R[i][2] * coordinate[n][i];
+	}
+	// 计算像点像平面坐标
+	*x = x_0 - f * xCon / zCon;
+	*y = y_0 - f * yCon / zCon;
+}
+
 int main() {
-	int m; // 影像比例尺
-	double x_0, y_0, f; // 内方位元素
+	int m = 40000; // 影像比例尺
+	double x_0 = 0, y_0 = 0, f = 153.24; // 内方位元素
 	double** imgCor; // 影像坐标
 	double** groundCor; // 地面坐标
 
 	FILE* fp; // 文件句柄
 	fp = fopen("data1.txt", "r");
-	fscanf(fp, "%d%lf%lf%lf", &m, &x_0, &y_0, &f);
 	int N, i; // 控制点数，计数器
 	fscanf(fp, "%d", &N);
 
@@ -97,5 +131,7 @@ int main() {
 	for (i = 0; i < N; i++) Y_S += groundCor[i][1];
 	Y_S /= N;
 
-	double** R; //旋转矩阵
+	double x, y; // 控制点像元的像平面坐标
+	double** R = calcuRotateMat(phi, omega, kappa); //旋转矩阵
+	colineation(x_0, y_0, f, &x, &y, R, groundCor, 0);
 }
