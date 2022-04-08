@@ -25,8 +25,9 @@ double** multipleMat(double** mat1, double** mat2, int row1, int col1, int col2)
 }
 
 // 计算旋转矩阵
-double** calcuRotateMat(double phi, double omega, double kappa) {
+double** calcuRMat(double phi, double omega, double kappa) {
 	int i, j;
+	/*
 	// 初始化三个方向的旋转矩阵
 	double **phiMat, **omegaMat, **kappaMat;
 	phiMat = (double**)malloc(3 * sizeof(double*));
@@ -67,7 +68,18 @@ double** calcuRotateMat(double phi, double omega, double kappa) {
 	free(phiMat);
 	free(omegaMat);
 	free(kappaMat);
-
+	*/
+	double** R = (double**)malloc(3 * sizeof(double*));
+	for (i = 0; i < 3; i++) R[i] = (double*)malloc(3 * sizeof(double));
+	R[0][0] = cos(phi) * cos(kappa) - sin(phi) * sin(omega) * sin(kappa);
+	R[0][1] = (-1.0) * cos(phi) * sin(kappa) - sin(phi) * sin(omega) * cos(kappa);
+	R[0][2] = (-1.0) * sin(phi) * cos(omega);
+	R[1][0] = cos(omega) * sin(kappa);
+	R[1][1] = cos(omega) * cos(kappa);
+	R[1][2] = (-1.0) * sin(omega);
+	R[2][0] = sin(phi) * cos(kappa) + cos(phi) * sin(omega) * sin(kappa);
+	R[2][1] = (-1.0) * sin(phi) * sin(kappa) + cos(phi) * sin(omega) * cos(kappa);
+	R[2][2] = cos(phi) * cos(omega);
 	return R;
 }
 
@@ -113,7 +125,7 @@ double** calcuColineation(double x_0, double y_0, double f, double** R, double**
 }
 
 // 计算误差系数矩阵
-double** calcuCoefficient(double x_0, double y_0, double f, double** R, double** imgCoor, double** groundCoor, int n, double omega, double kappa, double X_S, double Y_S, double Z_S) {
+double** calcuCoefficient(double x_0, double y_0, double f, double** R, double** imgCoor, double** groundCoor, int n, double omega, double kappa, double X_S, double Y_S, double Z_S, double m) {
 	double* zCon = (double*)malloc(n * sizeof(double));
 	int i, j;
 	for (i = 0; i < n; i++) zCon[i] = 0;
@@ -126,6 +138,7 @@ double** calcuCoefficient(double x_0, double y_0, double f, double** R, double**
 		for (j = 0; j < 6; j++)
 			coefficientMat[i][j] = 0;
 	for (i = 0; i < n; i++) {
+		/*
 		coefficientMat[2*i][0] = 1.0 / zCon[i] * (R[0][0] * f + R[0][2] * (imgCoor[i][0] - x_0));
 		coefficientMat[2*i][1] = 1.0 / zCon[i] * (R[1][0] * f + R[1][2] * (imgCoor[i][0] - x_0));
 		coefficientMat[2*i][2] = 1.0 / zCon[i] * (R[2][0] * f + R[2][2] * (imgCoor[i][0] - x_0));
@@ -142,59 +155,25 @@ double** calcuCoefficient(double x_0, double y_0, double f, double** R, double**
 		coefficientMat[2*i + 1][4] = -f * cos(kappa) - (imgCoor[i][1] - y_0) / f * ((imgCoor[i][0] - x_0) * sin(kappa) + (imgCoor[i][1] - y_0) * \
 								cos(kappa));
 		coefficientMat[2*i + 1][5] = imgCoor[i][0] - x_0;
+		*/
+		coefficientMat[2*i][0] = -f / (Z_S - groundCoor[i][2]);
+		coefficientMat[2*i][1] = 0;
+		coefficientMat[2*i][2] = -imgCoor[i][0] / (Z_S - groundCoor[i][2]);
+		coefficientMat[2*i+1][0] = 0;
+		coefficientMat[2*i+1][1] = -f / (Z_S - groundCoor[i][2]);
+		coefficientMat[2*i+1][2] = -imgCoor[i][1] / (Z_S - groundCoor[i][2]);
+		coefficientMat[2*i][3] = -f * (1 + pow(imgCoor[i][0], 2) / pow(f, 2));
+		coefficientMat[2*i][4] = -imgCoor[i][0] * imgCoor[i][1] / f;
+		coefficientMat[2*i][5] = imgCoor[i][1];
+		coefficientMat[2*i+1][3] = -imgCoor[i][0] * imgCoor[i][1] / f;
+		coefficientMat[2*i+1][4] = -f * (1 + pow(imgCoor[i][1], 2) / pow(f, 2));
+		coefficientMat[2*i+1][5] = -imgCoor[i][0];
 	}
 
 	free(zCon);
 
 	return coefficientMat;
 }
-
-/* 求解法方程
-double* solEqual(double** coefficientMat, int row, int col, double* constMat) {
-	int i, j, k;
-	
-	// 增广矩阵
-	double** augmentMat = (double**)malloc(row * sizeof(double*));
-	for (i = 0; i < row; i++) augmentMat[i] = (double*)malloc((col + 1) * sizeof(double));
-	for (i = 0; i < row; i++)
-		for (j = 0; j < col; j++)
-			augmentMat[i][j] = coefficientMat[i][j];
-	for (i = 0; i < row; i++)
-		augmentMat[i][col] = constMat[i];
-
-	for (i = 0; i < col; i++) {
-		// 将非零行移至最上方
-		double maxValue = fabs(augmentMat[i][i]);
-		int maxLine = i;
-		for (j = i + 1; j < row; j++)
-			if (fabs(augmentMat[j][i]) > maxValue) {
-				maxValue = fabs(augmentMat[j][i]);
-				maxLine = j;
-			}
-		
-		if (maxLine > i)
-			for (j = 0; j < col + 1; j++) {
-				double tmp = augmentMat[i][j];
-				augmentMat[i][j] = augmentMat[maxLine][j];
-				augmentMat[maxLine][j] = tmp;
-			}
-
-		// 消去其余行首项
-		for (j = i; j < col + 1; j++) augmentMat[i][j] /= augmentMat[i][i];
-		for (j = i + 1; j < row; j++)
-			for (k = i; k < col + 1; k++) 
-				augmentMat[j][k] -= augmentMat[i][k] * augmentMat[j][i];
-	}
-
-	double* result = (double*)malloc(row * sizeof(double));
-	for (i = 0; i < col; i++) result[i] = augmentMat[i][col];
-
-	for (i = 0; i < row; i++) free(augmentMat[i]);
-	free(augmentMat);
-
-	return result;
-}
-*/
 
 // 计算行列式
 double calcuDet(double** mat, int n) {
@@ -255,11 +234,11 @@ double** calcuInverseMat(double** mat, int n) {
 }
 
 int main() {
-	int m = 40000; // 影像比例尺
+	double m = 40000; // 影像比例尺
 	double x_0 = 0, y_0 = 0, f = 153.24; // 内方位元素
 	double** imgCoor; // 像点坐标
 	double** groundCoor; // 地面坐标
-	double minLimit = 0.000000001, minChange; // 限差
+	double minLimit = 0.0000001, minChange; // 限差
 	int maxTryLimit = 400, tryTime = 0; // 迭代次数上限
 
 	FILE* fp; // 文件句柄
@@ -294,10 +273,10 @@ int main() {
 	// 迭代过程
 	do {
 		tryTime++;
-		double** R = calcuRotateMat(phi, omega, kappa); //旋转矩阵
+		double** R = calcuRMat(phi, omega, kappa); //旋转矩阵
 		double** calculatedCoor = calcuColineation(x_0, y_0, f, R, groundCoor, N, X_S, Y_S, Z_S); // 计算像点坐标近似值
 
-		double** coefficientMat = calcuCoefficient(x_0, y_0, f, R, imgCoor, groundCoor, N, omega, kappa, X_S, Y_S, Z_S); // 计算系数矩阵
+		double** coefficientMat = calcuCoefficient(x_0, y_0, f, R, imgCoor, groundCoor, N, omega, kappa, X_S, Y_S, Z_S, m); // 计算系数矩阵
 		double** transCoefficientMat = transpMat(coefficientMat, 2 * N, 6); // 系数矩阵转置
 		double** constMat = (double**)malloc(2 * N * sizeof(double*)); // 计算常数矩阵
 		for (i = 0; i < 2 * N; i++) constMat[i] = (double*)malloc(sizeof(double));
@@ -320,7 +299,6 @@ int main() {
 		for (i = 0; i < N; i++) free(constMat[i]);
 		free(constMat);
 
-		// double* deltaMat = solEqual(mulCoefficientMat, 6, 6, mulConstMat); // 解方程
 		double** inverseMat = calcuInverseMat(mulCoefficientMat, 6);
 		double** deltaMat = multipleMat(inverseMat, mulConstMat, 6, 6, 1);
 		X_S += deltaMat[0][0]; 
@@ -345,6 +323,7 @@ int main() {
 	} while(minChange > minLimit && tryTime < maxTryLimit);
 
 	printf("Xs: %.2lf, Ys: %.2lf, Zs: %.2lf\nphi: %.6lf, omega: %.6lf, kappa: %.6lf\n", X_S, Y_S, Z_S, phi, omega, kappa);
+	printf("迭代%d次\n", tryTime);
 	for (i = 0; i < N; i++) {
 		free(imgCoor[i]);
 		free(groundCoor[i]);
