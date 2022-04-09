@@ -27,7 +27,6 @@ double** multipleMat(double** mat1, double** mat2, int row1, int col1, int col2)
 // 计算旋转矩阵
 double** calcuRMat(double phi, double omega, double kappa) {
 	int i, j;
-	/*
 	// 初始化三个方向的旋转矩阵
 	double **phiMat, **omegaMat, **kappaMat;
 	phiMat = (double**)malloc(3 * sizeof(double*));
@@ -68,18 +67,17 @@ double** calcuRMat(double phi, double omega, double kappa) {
 	free(phiMat);
 	free(omegaMat);
 	free(kappaMat);
-	*/
-	double** R = (double**)malloc(3 * sizeof(double*));
-	for (i = 0; i < 3; i++) R[i] = (double*)malloc(3 * sizeof(double));
-	R[0][0] = cos(phi) * cos(kappa) - sin(phi) * sin(omega) * sin(kappa);
-	R[0][1] = (-1.0) * cos(phi) * sin(kappa) - sin(phi) * sin(omega) * cos(kappa);
-	R[0][2] = (-1.0) * sin(phi) * cos(omega);
-	R[1][0] = cos(omega) * sin(kappa);
-	R[1][1] = cos(omega) * cos(kappa);
-	R[1][2] = (-1.0) * sin(omega);
-	R[2][0] = sin(phi) * cos(kappa) + cos(phi) * sin(omega) * sin(kappa);
-	R[2][1] = (-1.0) * sin(phi) * sin(kappa) + cos(phi) * sin(omega) * cos(kappa);
-	R[2][2] = cos(phi) * cos(omega);
+	// double** R = (double**)malloc(3 * sizeof(double*));
+	// for (i = 0; i < 3; i++) R[i] = (double*)malloc(3 * sizeof(double));
+	// R[0][0] = cos(phi) * cos(kappa) - sin(phi) * sin(omega) * sin(kappa);
+	// R[0][1] = (-1.0) * cos(phi) * sin(kappa) - sin(phi) * sin(omega) * cos(kappa);
+	// R[0][2] = (-1.0) * sin(phi) * cos(omega);
+	// R[1][0] = cos(omega) * sin(kappa);
+	// R[1][1] = cos(omega) * cos(kappa);
+	// R[1][2] = (-1.0) * sin(omega);
+	// R[2][0] = sin(phi) * cos(kappa) + cos(phi) * sin(omega) * sin(kappa);
+	// R[2][1] = (-1.0) * sin(phi) * sin(kappa) + cos(phi) * sin(omega) * cos(kappa);
+	// R[2][2] = cos(phi) * cos(omega);
 	return R;
 }
 
