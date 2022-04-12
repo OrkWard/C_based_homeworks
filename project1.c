@@ -97,14 +97,16 @@ double** transpMat(double** mat, int row, int col) {
 double** calcuColineation(double x_0, double y_0, double f, double** R, double** groundCoor, int n, double X_S, double Y_S, double Z_S) {
 	double *xCon, *yCon, *zCon;
 	int i, j;
-	xCon = (double*)malloc(n * sizeof(double*));
-	yCon = (double*)malloc(n * sizeof(double*));
-	zCon = (double*)malloc(n * sizeof(double*));
+	xCon = (double*)malloc(n * sizeof(double));
+	yCon = (double*)malloc(n * sizeof(double));
+	zCon = (double*)malloc(n * sizeof(double));
 	double** calculatedCoor = (double**)malloc(n * sizeof(double*));
 	for (i = 0; i < n; i++) calculatedCoor[i] = (double*)malloc(2 * sizeof(double));
-	for (i = 0; i < n; i++)
+	for (i = 0; i < n; i++) {
+		xCon[i] = yCon[i] = zCon[i] = 0;
 		for (j = 0; j < 2; j++)
 			calculatedCoor[i][j] = 0;	
+	}
 	for (i = 0; i < n; i++) {
 		xCon[i] += R[0][0] * (groundCoor[i][0] - X_S) + R[1][0] * (groundCoor[i][1] - Y_S) + R[2][0] * (groundCoor[i][2] - Z_S);
 		yCon[i] += R[0][1] * (groundCoor[i][0] - X_S) + R[1][1] * (groundCoor[i][1] - Y_S) + R[2][1] * (groundCoor[i][2] - Z_S);
@@ -242,7 +244,7 @@ int main() {
 	FILE* fp; // 文件句柄
 	fp = fopen("data1.txt", "r");
 	int N; // 控制点数
-	int i, j; // 计数器
+	int i; // 计数器
 	fscanf(fp, "%d", &N);
 
 	// 分配所有坐标所需的空间
@@ -260,7 +262,7 @@ int main() {
 	}
 
 	// 确定初始值
-	double X_S, Y_S, Z_S; // 三个线外方位元素
+	double X_S = 0, Y_S = 0, Z_S = 0; // 三个线外方位元素
 	double phi = 0, omega = 0, kappa = 0; // 三个角外方位元素
 	Z_S = m * f;
 	for (i = 0; i < N; i++) X_S += groundCoor[i][0];
@@ -320,8 +322,7 @@ int main() {
 		free(deltaMat);
 	} while(minChange > minLimit && tryTime < maxTryLimit);
 
-	printf("Xs: %.2lf, Ys: %.2lf, Zs: %.2lf\nphi: %.6lf, omega: %.6lf, kappa: %.6lf\n", X_S, Y_S, Z_S, phi, omega, kappa);
-	printf("迭代%d次\n", tryTime);
+	printf("%.2lf %.2lf %.2lf %.6lf %.6lf %.6lf\n", X_S, Y_S, Z_S, phi, omega, kappa);
 	for (i = 0; i < N; i++) {
 		free(imgCoor[i]);
 		free(groundCoor[i]);
