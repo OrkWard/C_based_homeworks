@@ -37,47 +37,18 @@ double** copyMat(double** mat, int row, int col) {
 
 // 计算旋转矩阵
 double** calcuRMat(double phi, double omega, double kappa) {
-	int i, j;
-	// 初始化三个方向的旋转矩阵
-	double **phiMat, **omegaMat, **kappaMat;
-	phiMat = (double**)malloc(3 * sizeof(double*));
-	for (i = 0; i < 3; i++) phiMat[i] = (double*)malloc(3 * sizeof(double));
-	omegaMat = (double**)malloc(3 * sizeof(double*));
-	for (i = 0; i < 3; i++) omegaMat[i] = (double*)malloc(3 * sizeof(double));
-	kappaMat = (double**)malloc(3 * sizeof(double*));
-	for (i = 0; i < 3; i++) kappaMat[i] = (double*)malloc(3 * sizeof(double));
-	for (i = 0; i < 3; i++)
-		for (j = 0; j < 3; j++) {
-			phiMat[i][j] = 0;
-			omegaMat[i][j] = 0;
-			kappaMat[i][j] = 0;
-		}
-
-	phiMat[0][0] = cos(phi); phiMat[0][2] = -sin(phi);
-	phiMat[1][1] = 1;
-	phiMat[2][0] = sin(phi); phiMat[2][2] = cos(phi);
-	omegaMat[0][0] = 1;
-	omegaMat[1][1] = cos(omega); omegaMat[1][2] = -sin(omega);
-	omegaMat[2][1] = sin(omega); omegaMat[2][2] = cos(omega);
-	kappaMat[0][0] = cos(kappa); kappaMat[0][1] = -sin(kappa);
-	kappaMat[1][0] = sin(kappa); kappaMat[1][1] = cos(kappa);
-	kappaMat[2][2] = 1;
-
-	// 计算三个矩阵相乘
-	double** tmpMat = multipleMat(phiMat, omegaMat, 3, 3, 3);
-	double** R = multipleMat(tmpMat, kappaMat, 3, 3, 3);
-
-	// 释放临时矩阵内存
-	for (i = 0; i < 3; i++) {
-		free(tmpMat[i]);
-		free(phiMat[i]);
-		free(omegaMat[i]);
-		free(kappaMat[i]);
-	}
-	free(tmpMat);
-	free(phiMat);
-	free(omegaMat);
-	free(kappaMat);
+	int i;
+	double **R = (double**)malloc(3 * sizeof(double*));
+	for (i = 0; i < 3; i++) R[i] = (double*)malloc(3 * sizeof(double));
+	R[0][0] = cos(phi) * cos(kappa) - sin(phi) * sin(omega) * sin(kappa);
+	R[0][1] = -cos(phi) * sin(kappa) - sin(phi) * sin(omega) * cos(kappa);
+	R[0][2] = -sin(phi) * cos(omega);
+	R[1][0] = cos(omega) * sin(kappa);
+	R[1][1] = cos(omega) * cos(kappa);
+	R[1][2] = -sin(omega);
+	R[2][0] = sin(phi) * cos(kappa) + cos(phi) * sin(omega) * sin(kappa);
+	R[2][1] = -sin(phi) * sin(kappa) + cos(phi) * sin(omega) * cos(kappa);
+	R[2][2] = cos(phi) * cos(omega);
 	return R;
 }
 
@@ -151,10 +122,22 @@ double** calcuInverseMat(double** mat, int n) {
 	}
 }
 
+// 打印矩阵
+void printMat(char *name, double **mat, int row, int col) {
+	int i, j;
+	printf("%s:\n", name);
+	for (i = 0; i < row; i++) {
+		for (j = 0; j < col; j++) 
+			printf("    %8.4lf", mat[i][j]);
+		putchar('\n');
+	}
+}
+
 int main() {
     double phi = 0, omega = 0, kappa = 0, mu = 0, nu = 0;   // 5个相对定向元素
     int i, j;                                               // 计数器
-    double minLimit = 0.000001, minChange;                  // 限差
+    double minLimit = 0.0000000001, minChange;              // 限差
+	int maxTry = 200, tryTime = 0;
 
     FILE* fp;                                               // 文件句柄
     int N;                                                  // 同名像点数
@@ -174,6 +157,7 @@ int main() {
     fclose(fp);
 
     do {
+		tryTime++;
         double **R, **R1, **R2;
         double **AMat, **LMat;                              // 各矩阵
         AMat = (double**)malloc(N * sizeof(double*));
@@ -184,34 +168,33 @@ int main() {
         }                                                   // 初始化法方程矩阵
 
         /* 计算系数矩阵和常数矩阵 */
-        R = calcuRMat(phi, omega, kappa);                   // 计算旋转矩阵
+		R = calcuRMat(phi, omega, kappa);                   // 计算旋转矩阵
         for (i = 0; i < N; i++) {
             R1 = transpMat(left + i, 1, 3);                   // 计算X1，Y1，Z1
             double **transRight = transpMat(right + i, 1, 3);
             R2 = multipleMat(R, transRight, 3, 3, 1);        // 计算X2，Y2，Z2
-            double N, NPrime, Q, *B;
+            double N, NPrime, *B;
             B = (double*)malloc(3 * sizeof(double));
             B[0] = 5.185;
             B[1] = B[0] * mu;
             B[2] = B[0] * nu;
             N = (B[0]*R2[2][0] - B[2]*R2[0][0]) / (R1[0][0]*R2[2][0] - R1[2][0]*R2[0][0]);
-            NPrime = (B[0]*R1[2][0] - B[2]*R1[0][0]) / (R1[0][0]*R2[2][2] - R1[2][0]*R2[0][0]);
-            Q = N*R1[1][0] - NPrime*R2[1][0] - B[1];
+            NPrime = (B[0]*R1[2][0] - B[2]*R1[0][0]) / (R1[0][0]*R2[2][0] - R1[2][0]*R2[0][0]);
 
             AMat[i][0] = -R2[0][0] * R2[1][0] * NPrime / R2[2][0];
-            AMat[i][1] = -(R2[2][0] + R2[1][0]*R2[1][0]/R2[2][0]);
+            AMat[i][1] = -(R2[2][0] + R2[1][0]*R2[1][0]/R2[2][0]) * NPrime;
             AMat[i][2] = R2[0][0] * NPrime;
             AMat[i][3] = B[0];
-            AMat[i][4] = -R2[1][0] * R2[2][0] / B[0];
-            LMat[i][0] = Q;
+            AMat[i][4] = -R2[1][0] / R2[2][0] * B[0];
+            LMat[i][0] = N*R1[1][0] - NPrime*R2[1][0] - B[1];
 
             free(B);
-            for (j = 0; j < 3; i++) {
+            for (j = 0; j < 3; j++) {
                 free(R1[j]);
                 free(R2[j]);
                 free(transRight[j]);
             }
-            free(R1); free(R2); free(transRight);
+			free(R1); free(R2); free(transRight);
         }
 
         double **ATMat = transpMat(AMat, N, 5);             // 系数矩阵转置
@@ -231,7 +214,7 @@ int main() {
         minChange = minChange > fabs(delta[4][0]) ? fabs(delta[4][0]) : minChange;
         nu += delta[4][0];
 
-        for (i = 0; i < 3; i++) free(R[i]); free(R);
+		for (i = 0; i < 3; i++) free(R[i]); free(R);
         for (i = 0; i < N; i++) {
             free(AMat[i]);
             free(LMat[i]);
@@ -245,7 +228,7 @@ int main() {
             free(delta[i]);
         }
         free(ATMat); free(ATAMat); free(inverATAMat); free(constMat); free(delta);
-    } while(minChange > minLimit);
+    } while(minChange > minLimit && tryTime <= maxTry);
 
     for (i = 0; i < N; i++) {
         free(left[i]);
